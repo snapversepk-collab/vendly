@@ -23,17 +23,30 @@ pg.types.setTypeParser(20, (v) => Number(v));
 let db: Db;
 
 async function makePg(url: string): Promise<Db> {
-  // Render's *internal* database URL uses a bare hostname (dpg-xxxx-a) and plain TCP inside
-  // the private network; the *external* URL (….render.com) needs SSL. PGSSL=on|off overrides.
+  // Hosted Postgres (Neon, Supabase, Render external URLs) needs SSL. Local databases and
+  // private-network hostnames without a dot (e.g. Render internal dpg-xxxx-a) don't.
+  // PGSSL=on|off overrides.
   const host = new URL(url).hostname;
   const internal = host === 'localhost' || host === '127.0.0.1' || !host.includes('.');
   const useSsl = process.env.PGSSL ? process.env.PGSSL === 'on' : !internal;
+  // The SSL options object below would override sslmode/channel_binding in the URL, so drop
+  // them from the string (Neon's copy-paste URL includes both) and let `ssl` decide.
+  const cleanUrl = new URL(url);
+  cleanUrl.searchParams.delete('sslmode');
+  cleanUrl.searchParams.delete('channel_binding');
   const pool = new pg.Pool({
-    connectionString: url,
+    connectionString: cleanUrl.toString(),
     ssl: useSsl ? { rejectUnauthorized: false } : undefined,
-    max: 10,
+    max: Number(process.env.PG_POOL_MAX ?? 5),
+    // Neon scales to zero after 5 idle minutes and drops open connections; close ours first
+    idleTimeoutMillis: 60_000,
+    // first query after Neon wakes up can take a few seconds
+    connectionTimeoutMillis: 15_000,
   });
-  pool.on('connect', (c) => c.query("SET TIME ZONE 'Asia/Karachi'"));
+  // A dropped idle connection (database paused, network blip) must not crash the server
+  pool.on('error', (e) => console.warn('[db] idle connection closed:', e.message));
+  // No per-connection SET TIME ZONE: every query passes Karachi dates in or converts with
+  // AT TIME ZONE 'Asia/Karachi', so pooled connection strings (PgBouncer) work too.
   return {
     query: (t, p) => pool.query(t, p as any[]) as any,
     async tx(fn) {

@@ -1,21 +1,12 @@
-# Render Blueprint: backend API + Postgres database.
-# Render dashboard → New → Blueprint → pick this repo. Then fill the env vars marked sync:false.
-databases:
-  - name: vendly-db
-    databaseName: vendly
-    user: vendly
-    region: singapore        # closest Render region to Pakistan
-    # NOTE: free Render Postgres expires 30 days after creation. Switch to a paid plan
-    # (e.g. basic-256mb) before real vendors put bookings in it.
-    plan: free
-
+# Render Blueprint: backend API only. The database lives on Neon (free Postgres, doesn't expire).
+# Render dashboard → New → Blueprint → pick this repo, then fill the env vars marked sync:false.
 services:
   - type: web
     name: vendly-api
     runtime: node
     rootDir: backend
-    region: singapore
-    plan: free               # free instances sleep after 15 min idle; see README "Scheduled emails"
+    region: singapore        # closest Render region to Pakistan
+    plan: free               # sleeps after 15 min idle; the cron ping in the README keeps it awake
     buildCommand: npm ci --include=dev && npm run build
     startCommand: npm start
     healthCheckPath: /api/health
@@ -24,10 +15,10 @@ services:
         value: "22"
       - key: NODE_ENV
         value: production
+      # Neon → your project → Connect → copy the connection string
+      # (postgresql://user:password@ep-xxxx-pooler.ap-southeast-1.aws.neon.tech/neondb?sslmode=require)
       - key: DATABASE_URL
-        fromDatabase:
-          name: vendly-db
-          property: connectionString
+        sync: false
       - key: JWT_SECRET
         generateValue: true
       - key: CRON_SECRET

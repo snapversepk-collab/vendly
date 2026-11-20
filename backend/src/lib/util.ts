@@ -31,6 +31,8 @@ export function errorHandler(err: any, _req: Request, res: Response, _next: Next
   }
   if (err instanceof HttpError) return res.status(err.status).json({ error: err.message, code: err.code, ...err.extra });
   if (err?.code === '23505') return res.status(409).json({ error: 'That already exists', code: 'duplicate' });
+  // malformed uuid / date in a URL or body: treat as not found instead of a server error
+  if (err?.code === '22P02' || err?.code === '22007' || err?.code === '22008') return res.status(404).json({ error: 'Not found' });
   console.error(err);
   res.status(500).json({ error: 'Something went wrong on our side' });
 }

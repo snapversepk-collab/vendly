@@ -201,8 +201,8 @@ dashboardRouter.get(
     const rows = (await q(
       `${BOOKING_SELECT} WHERE bk.business_id=$1 ${staff ? 'AND $2::uuid = ANY(bk.assigned_user_ids)' : 'AND $2::uuid IS NOT NULL'}
          AND (lower(c.name) LIKE $3 OR lower(COALESCE(bk.venue,'')) LIKE $3 OR lower(COALESCE(f.label,'')) LIKE $3 ${digits.length >= 3 ? 'OR c.whatsapp LIKE $4' : 'OR $4::text IS NULL'})
-       ORDER BY abs(bk.date - CURRENT_DATE) LIMIT 12`,
-      [req.ctx.businessId, req.ctx.userId, `%${term.toLowerCase()}%`, digits.length >= 3 ? `%${digits}%` : null],
+       ORDER BY abs(bk.date - $5::date) LIMIT 12`,
+      [req.ctx.businessId, req.ctx.userId, `%${term.toLowerCase()}%`, digits.length >= 3 ? `%${digits}%` : null, todayPk()],
     )).rows;
     res.json(rows.map((r) => present(r, req.ctx)));
   }),
