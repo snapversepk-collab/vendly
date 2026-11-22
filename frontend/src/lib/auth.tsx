@@ -11,6 +11,8 @@ interface AuthState {
   role: Role | null;
   /** Owners and managers see money; event staff never do */
   canSeeMoney: boolean;
+  /** People running Vendly (PLATFORM_ADMIN_EMAILS on the server) */
+  isPlatformAdmin: boolean;
   refresh: () => Promise<Me | null>;
   signIn: (email: string, password: string) => Promise<void>;
   setToken: (token: string) => Promise<Me | null>;
@@ -67,7 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const role = me?.role ?? null;
   return (
-    <Ctx.Provider value={{ loading, user: me?.user ?? null, business: me?.business ?? null, role, canSeeMoney: role === 'owner' || role === 'manager', refresh, signIn, setToken, signOut }}>
+    <Ctx.Provider value={{ loading, user: me?.user ?? null, business: me?.business ?? null, role, canSeeMoney: role === 'owner' || role === 'manager', isPlatformAdmin: !!me?.isPlatformAdmin, refresh, signIn, setToken, signOut }}>
       {children}
     </Ctx.Provider>
   );

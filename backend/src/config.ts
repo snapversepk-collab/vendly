@@ -18,6 +18,8 @@ export const config = {
   emailFrom: env.EMAIL_FROM_ADDRESS || 'bookings@example.com',
   cronSecret: env.CRON_SECRET || '',
   adminSecret: env.ADMIN_SECRET || '',
+  /** Emails of the people running Vendly; they get the /admin panel */
+  platformAdminEmails: (env.PLATFORM_ADMIN_EMAILS ?? '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean),
   freeBookingsPerMonth: Number(env.FREE_BOOKINGS_PER_MONTH ?? 10),
   /** In-process scheduler. Render free instances sleep, so also hit POST /api/cron/run from an external cron. */
   inProcessCron: env.IN_PROCESS_CRON !== 'off',

@@ -8,6 +8,7 @@ import { config } from './config.js';
 import { initDb, q } from './db/index.js';
 import { runScheduledJobs } from './lib/scheduler.js';
 import { HttpError, ah, errorHandler } from './lib/util.js';
+import { adminRouter } from './routes/admin.js';
 import { authRouter } from './routes/auth.js';
 import { bookingsRouter } from './routes/bookings.js';
 import { businessRouter } from './routes/business.js';
@@ -77,6 +78,8 @@ api.post('/admin/plan', ah(async (req, res) => {
   );
   res.json(r.rows);
 }));
+
+api.use('/admin', adminRouter);
 
 // Everything below needs a signed-in member; every query is filtered by req.ctx.businessId
 const member = Router();

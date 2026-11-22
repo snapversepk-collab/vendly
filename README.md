@@ -111,9 +111,13 @@ On Render this also keeps the free instance awake. Running it more often is safe
 
 Google Cloud Console → Credentials → OAuth client ID (Web). Add your Vercel URL and `http://localhost:5173` under *Authorised JavaScript origins*, then set `GOOGLE_CLIENT_ID` on Render. The button appears only when it is set.
 
+### Admin panel
+
+People listed in `PLATFORM_ADMIN_EMAILS` (comma-separated, on the backend) get an **Admin** button in the app header. `/admin` shows every vendor that signed up, their bookings and inquiries, when they joined and were last active, and lets you change each vendor's plan. An admin can also be a normal vendor owner with their own business.
+
 ### Plans
 
-Free plan: `FREE_BOOKINGS_PER_MONTH` bookings a month (default 10). Prices come from `PRO_PRICE` / `TEAM_PRICE`. Subscription payments are not built yet (spec build step 12), so plans are switched by hand:
+Free plan: `FREE_BOOKINGS_PER_MONTH` bookings a month (default 10). Prices come from `PRO_PRICE` / `TEAM_PRICE`. Subscription payments are not built yet (spec build step 12), so plans are switched by hand in the admin panel, or with the `ADMIN_SECRET`:
 
 ```bash
 curl -X POST https://<your-api>.onrender.com/api/admin/plan \

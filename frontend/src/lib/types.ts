@@ -29,7 +29,7 @@ export interface Business {
   plans?: Record<Plan, { name: string; price: number }>;
 }
 
-export interface Me { user: User; role: Role | null; business: Business | null }
+export interface Me { user: User; role: Role | null; business: Business | null; isPlatformAdmin?: boolean }
 
 export interface Money { total: number; paid: number; balance: number; advanceDue: number; advancePaid: boolean; fullyPaid: boolean; advancePct?: number }
 

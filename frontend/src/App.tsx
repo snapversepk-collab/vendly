@@ -25,6 +25,7 @@ const Upgrade = lazy(() => import('./pages/Upgrade'))
 const ClientBookingPage = lazy(() => import('./pages/ClientBookingPage'))
 const ClientQuote = lazy(() => import('./pages/ClientQuote'))
 const ClientReceipt = lazy(() => import('./pages/ClientReceipt'))
+const Admin = lazy(() => import('./pages/Admin'))
 
 const M = ['owner', 'manager'] as const
 
@@ -69,6 +70,7 @@ export default function App() {
           <Route path="/inquiries/:id" element={<RequireAuth roles={[...M]}><Inquiries /></RequireAuth>} />
           <Route path="/reports" element={<RequireAuth roles={[...M]}><Reports /></RequireAuth>} />
           <Route path="/upgrade" element={<RequireAuth roles={['owner']}><Upgrade /></RequireAuth>} />
+          <Route path="/admin" element={<Admin />} />
         </Route>
         <Route path="*" element={<NotFound />} />
       </Routes>

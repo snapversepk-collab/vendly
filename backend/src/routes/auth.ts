@@ -7,6 +7,7 @@ import { config } from '../config.js';
 import { one, q, tx, type Queryable } from '../db/index.js';
 import { emails } from '../lib/email.js';
 import { MESSAGE_TEMPLATES } from '../lib/templates.js';
+import { isPlatformAdmin } from './admin.js';
 import { HttpError, ah, bad, token } from '../lib/util.js';
 
 export const authRouter = Router();
@@ -114,6 +115,7 @@ authRouter.get(
     const hasBookings = m ? !!(await one(`SELECT 1 FROM bookings WHERE business_id=$1 LIMIT 1`, [m.id])) : false;
     res.json({
       user: u,
+      isPlatformAdmin: await isPlatformAdmin(u.id),
       role: m?.role ?? null,
       business: m
         ? {

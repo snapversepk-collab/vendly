@@ -10,7 +10,7 @@ import { FnDot, StatusPill } from './ui';
 
 /** Header (Today / Calendar / Inquiries / Reports tabs, search, New booking, avatar) + phone tab bar. */
 export function AppShell() {
-  const { business, user, role } = useAuth();
+  const { business, user, role, isPlatformAdmin } = useAuth();
   const [inq, setInq] = useState(0);
   const loc = useLocation();
   const nav = useNavigate();
@@ -60,6 +60,9 @@ export function AppShell() {
             <Link to="/bookings/new" className="btn btn-primary hide-phone" style={{ height: 40 }}>
               <IconPlus />New booking
             </Link>
+          )}
+          {isPlatformAdmin && (
+            <Link to="/admin" className="btn btn-ghost btn-sm" aria-current={loc.pathname === '/admin' ? 'page' : undefined}>Admin</Link>
           )}
           <Link to="/settings" aria-label="Settings" style={{ width: 40, height: 40, borderRadius: '50%', background: 'var(--ink)', color: 'var(--ground)', display: 'grid', placeItems: 'center', fontSize: 13, fontWeight: 600, flex: 'none' }}>
             {initials(user?.name)}
