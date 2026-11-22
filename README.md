@@ -6,9 +6,9 @@ Built from `Datebook build spec.md` and the Datebook design canvas (`Datebook.ht
 
 ```
 frontend/   Vite + React + TypeScript SPA      → Vercel
-backend/    Node + Express + TypeScript API    → Render (free web service)
+backend/    Node + Express + TypeScript API    → Vercel Functions (or Render)
             Postgres                            → Neon (free, doesn't expire)
-render.yaml Render Blueprint for the API
+render.yaml Render Blueprint for the API (alternative host)
 ```
 
 ## Run locally
@@ -41,7 +41,7 @@ cd backend && npm test
 
 ## Deploy
 
-Order: database (Neon) → backend (Render) → frontend (Vercel). Everything below fits in the free tiers.
+Order: database (Neon) → backend (Vercel, or Render) → frontend (Vercel). Everything below fits in the free tiers.
 
 ### 1. Database on Neon
 
@@ -58,7 +58,17 @@ Nothing else to do on Neon: the API creates its tables on first start.
 
 Neon's free plan has 1 GB of storage per project and pauses the database after 5 idle minutes. The next query wakes it in about a second, and the API is set up for that (short connection timeouts, idle connections closed before Neon drops them).
 
-### 2. Backend on Render
+### 2a. Backend on Vercel (free, no card)
+
+`backend/vercel.json` and `backend/api/index.js` make the API run as a Vercel Function in Singapore (`sin1`). `npm run build` compiles `src/` to `dist/`, and every request is rewritten to the function, which is the Express app.
+
+1. Vercel → **Add New → Project** → import the repo → click **Import single project** next to the backend (or Edit → Root Directory `backend`). Framework preset: **Other**.
+2. Environment variables (Production and Preview): `DATABASE_URL` (Neon), `FRONTEND_URL` (your frontend's Vercel URL), `JWT_SECRET`, `CRON_SECRET`, `ADMIN_SECRET` (long random strings, e.g. `openssl rand -base64 36`), `IN_PROCESS_CRON=off`, optionally `RESEND_API_KEY`, `EMAIL_FROM_ADDRESS`, `GOOGLE_CLIENT_ID`, `FREE_BOOKINGS_PER_MONTH`, `PRO_PRICE`, `TEAM_PRICE`.
+3. Deploy, then open `https://<backend>.vercel.app/api/health`.
+
+Vercel's Hobby plan is for non-commercial use; move to Pro (or to Render below) once vendors pay. Hobby cron jobs run once a day, so use the external 15-minute cron described in **Scheduled emails**.
+
+### 2b. Backend on Render (alternative)
 
 1. Render dashboard → **New → Blueprint** → connect GitHub and pick the repo. Render reads `render.yaml` and creates `vendly-api` (root `backend/`, build `npm ci --include=dev && npm run build`, start `npm start`, health check `/api/health`, region Singapore, free plan).
 2. Fill the variables marked *sync: false* when asked:
@@ -84,12 +94,12 @@ Neon's free plan has 1 GB of storage per project and pauses the database after 5
 Reminders, "Tomorrow at a glance", "Advance still missing", thank-you emails and moving finished bookings to Completed run from one job every 15 minutes (Asia/Karachi time). The API runs it in-process, but a sleeping free instance can't. Point any free external cron (for example cron-job.org) at:
 
 ```
-POST https://<your-api>.onrender.com/api/cron/run
-Header: x-cron-secret: <CRON_SECRET from the Render dashboard>
+POST https://<your-api>/api/cron/run
+Header: x-cron-secret: <CRON_SECRET>
 Every 15 minutes
 ```
 
-This also keeps the free instance awake. Running it more often is safe: `email_log` stops duplicate sends.
+On Render this also keeps the free instance awake. Running it more often is safe: `email_log` stops duplicate sends.
 
 ### Automatic email (Resend)
 

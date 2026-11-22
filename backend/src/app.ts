@@ -6,7 +6,7 @@ import { z } from 'zod';
 import { requireMember } from './auth.js';
 import { config } from './config.js';
 import { initDb, q } from './db/index.js';
-import { runScheduledJobs, startScheduler } from './lib/scheduler.js';
+import { runScheduledJobs } from './lib/scheduler.js';
 import { HttpError, ah, errorHandler } from './lib/util.js';
 import { authRouter } from './routes/auth.js';
 import { bookingsRouter } from './routes/bookings.js';
@@ -16,8 +16,18 @@ import { inquiriesRouter } from './routes/inquiries.js';
 import { messagesRouter } from './routes/messages.js';
 import { publicRouter } from './routes/public.js';
 
+/**
+ * The Express app, shared by both ways of running it:
+ * - src/server.ts starts a long-running server (local dev, Render)
+ * - api/index.js hands it to Vercel Functions
+ */
 const app = express();
 app.set('trust proxy', 1);
+
+// Connect + migrate once per process (or per serverless instance), before the first request
+let ready: Promise<unknown> | null = null;
+export const ensureDb = () => (ready ??= initDb().catch((e) => { ready = null; throw e; }));
+app.use((_req, _res, next) => { ensureDb().then(() => next(), next); });
 app.use(helmet({ crossOriginResourcePolicy: { policy: 'cross-origin' } }));
 app.use(compression());
 app.use(
@@ -83,6 +93,4 @@ app.get('/', (_req, res) => res.json({ name: `${config.appName} API`, health: '/
 app.use((_req, res) => res.status(404).json({ error: 'Not found' }));
 app.use(errorHandler);
 
-await initDb();
-app.listen(config.port, () => console.log(`[api] listening on :${config.port}`));
-if (config.inProcessCron) startScheduler();
+export default app;
